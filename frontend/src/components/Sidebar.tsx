@@ -11,6 +11,7 @@ import {
   LayoutGrid
 } from 'lucide-react'
 import { type ContentType } from '@/App'
+import type { FileRecord } from '@/lib/api'
 
 interface SidebarProps {
   onCreateNote?: () => void
@@ -18,9 +19,11 @@ interface SidebarProps {
   currentFilter?: ContentType
   onDeleteSelected?: () => void
   hasSelection?: boolean
+  recentFiles?: FileRecord[]
+  onFileSelect?: (file: FileRecord) => void
 }
 
-export function Sidebar({ onCreateNote, onFilterChange, currentFilter = 'all', onDeleteSelected, hasSelection }: SidebarProps) {
+export function Sidebar({ onCreateNote, onFilterChange, currentFilter = 'all', onDeleteSelected, hasSelection, recentFiles = [], onFileSelect }: SidebarProps) {
   const handleFilterClick = (filter: ContentType) => {
     onFilterChange?.(filter)
   }
@@ -61,14 +64,34 @@ export function Sidebar({ onCreateNote, onFilterChange, currentFilter = 'all', o
           <LayoutGrid className="h-4 w-4" />
           All Files
         </Button>
-        <Button variant="ghost" className="w-full justify-start gap-2 h-9 text-sm text-muted-foreground hover:text-foreground">
+        <Button 
+          variant={currentFilter === 'favorites' ? 'secondary' : 'ghost'} 
+          className={`w-full justify-start gap-2 h-9 text-sm ${currentFilter !== 'favorites' ? 'text-muted-foreground hover:text-foreground' : ''}`}
+          onClick={() => handleFilterClick('favorites')}
+        >
           <Star className="h-4 w-4" />
           Favorites
         </Button>
-        <Button variant="ghost" className="w-full justify-start gap-2 h-9 text-sm text-muted-foreground hover:text-foreground">
+        <Button variant="ghost" className="w-full justify-start gap-2 h-9 text-sm text-muted-foreground hover:text-foreground pointer-events-none">
           <Clock className="h-4 w-4" />
           Recent
         </Button>
+        {recentFiles.length > 0 ? (
+          <div className="ml-6 space-y-0.5">
+            {recentFiles.map(file => (
+              <button
+                key={file.id}
+                onClick={() => onFileSelect?.(file)}
+                className="w-full text-left text-xs text-muted-foreground hover:text-foreground truncate px-2 py-1 rounded hover:bg-muted/50 transition-colors"
+                title={file.filename}
+              >
+                {file.filename.replace(/\.[^/.]+$/, '')}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="ml-6 text-xs text-muted-foreground/50 px-2">No recent files</p>
+        )}
 
         <p className="text-xs font-medium text-muted-foreground px-2 py-2 mt-4">
           Content Types
@@ -110,13 +133,13 @@ export function Sidebar({ onCreateNote, onFilterChange, currentFilter = 'all', o
       {/* Bottom Actions */}
       <div className="p-3 border-t border-border space-y-1">
         <Button 
-          variant="ghost" 
-          className={`w-full justify-start gap-2 h-9 text-sm ${hasSelection ? 'text-destructive hover:text-destructive hover:bg-destructive/10' : 'text-muted-foreground hover:text-foreground'}`}
+          variant={hasSelection ? 'destructive' : 'ghost'}
+          className={`w-full justify-start gap-2 h-9 text-sm ${!hasSelection ? 'text-muted-foreground hover:text-foreground' : ''}`}
           onClick={onDeleteSelected}
           disabled={!hasSelection}
         >
           <Trash2 className="h-4 w-4" />
-          {hasSelection ? 'Delete Selected' : 'Trash'}
+          Delete All
         </Button>
       </div>
     </aside>

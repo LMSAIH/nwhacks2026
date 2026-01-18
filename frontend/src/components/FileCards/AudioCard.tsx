@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button'
 import { 
   Play, 
   Pause, 
-  Trash2
+  Trash2,
+  Star
 } from 'lucide-react'
 import type { FileRecord } from '@/lib/api'
 import { getMediaUrl } from '@/lib/utils'
@@ -12,9 +13,10 @@ interface AudioCardProps {
   file: FileRecord
   onDelete: (id: number) => void
   onSelect: (file: FileRecord) => void
+  onToggleFavorite?: (id: number) => void
 }
 
-export function AudioCard({ file, onDelete, onSelect }: AudioCardProps) {
+export function AudioCard({ file, onDelete, onSelect, onToggleFavorite }: AudioCardProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
 
@@ -90,6 +92,19 @@ export function AudioCard({ file, onDelete, onSelect }: AudioCardProps) {
         <span className="text-xs font-medium text-foreground truncate max-w-[100px]">
           {displayName}
         </span>
+        
+        {/* Favorite Button */}
+        <Button
+          size="icon"
+          variant="ghost"
+          className={`h-7 w-7 flex-shrink-0 transition-opacity ${file.is_favorite ? 'opacity-100 text-primary' : 'opacity-0 group-hover:opacity-100 text-muted-foreground'}`}
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggleFavorite?.(file.id)
+          }}
+        >
+          <Star className={`h-3.5 w-3.5 ${file.is_favorite ? 'fill-primary text-primary' : ''}`} />
+        </Button>
         
         {/* Delete Button */}
         <Button

@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button'
 import { 
   Trash2, 
   FileText,
-  FileType
+  FileType,
+  Star
 } from 'lucide-react'
 import type { FileRecord } from '@/lib/api'
 import { api } from '@/lib/api'
@@ -13,9 +14,10 @@ interface DocumentCardProps {
   file: FileRecord
   onDelete: (id: number) => void
   onSelect: (file: FileRecord) => void
+  onToggleFavorite?: (id: number) => void
 }
 
-export function DocumentCard({ file, onDelete, onSelect }: DocumentCardProps) {
+export function DocumentCard({ file, onDelete, onSelect, onToggleFavorite }: DocumentCardProps) {
   const [contentPreview, setContentPreview] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -82,6 +84,19 @@ export function DocumentCard({ file, onDelete, onSelect }: DocumentCardProps) {
               {file.filename.replace(/\.[^/.]+$/, '')}
             </h3>
           </div>
+
+          {/* Favorite Button */}
+          <Button
+            size="icon"
+            variant="ghost"
+            className={`h-7 w-7 transition-opacity ${file.is_favorite ? 'opacity-100 text-primary' : 'opacity-0 group-hover:opacity-100 text-muted-foreground'}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleFavorite?.(file.id)
+            }}
+          >
+            <Star className={`h-3.5 w-3.5 ${file.is_favorite ? 'fill-primary text-primary' : ''}`} />
+          </Button>
 
           {/* Delete Button */}
           <Button

@@ -22,6 +22,8 @@ interface FileGridProps {
   onRefresh: () => void
   selectedIds?: Set<number>
   onSelectionChange?: (ids: Set<number>) => void
+  onToggleFavorite?: (id: number) => void
+  onFileOpen?: (file: FileRecord) => void
 }
 
 // Calculate size class for masonry layout
@@ -65,7 +67,7 @@ function getItemSize(file: FileRecord): 'tiny' | 'small' | 'medium' | 'large' {
   return 'small'
 }
 
-export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), onSelectionChange }: FileGridProps) {
+export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), onSelectionChange, onToggleFavorite, onFileOpen }: FileGridProps) {
   const [selectedFile, setSelectedFile] = useState<FileRecord | null>(null)
   const [detailedFile, setDetailedFile] = useState<FileRecord | null>(null)
   const [loadingDetails, setLoadingDetails] = useState(false)
@@ -84,6 +86,11 @@ export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), o
     // Only start drag if clicking on the grid background, not on a card
     if ((e.target as HTMLElement).closest('[data-file-card]')) return
     
+    // Clear selection when clicking on empty area (unless holding ctrl/cmd)
+    if (!e.ctrlKey && !e.metaKey && selectedIds.size > 0) {
+      onSelectionChange?.(new Set())
+    }
+    
     const rect = gridRef.current?.getBoundingClientRect()
     if (!rect) return
     
@@ -91,7 +98,7 @@ export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), o
     const point = { x: e.clientX - rect.left, y: e.clientY - rect.top }
     setDragStart(point)
     setDragEnd(point)
-  }, [])
+  }, [selectedIds, onSelectionChange])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDragging || !dragStart || !gridRef.current) return
@@ -175,6 +182,9 @@ export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), o
   }, [files])
 
   const handleSelect = async (file: FileRecord) => {
+    // Track file open for recent files
+    onFileOpen?.(file)
+    
     // For documents, open full-screen editor instead of sidebar
     if (file.filetype === 'document' || file.filetype === 'text') {
       setDocumentEditorFile(file)
@@ -227,7 +237,8 @@ export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), o
     const props = {
       file,
       onDelete: handleDelete,
-      onSelect: handleSelect
+      onSelect: handleSelect,
+      onToggleFavorite
     }
 
     // Get size-specific wrapper class
@@ -280,7 +291,7 @@ export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), o
           isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''
         }`}
         onClick={(e) => {
-          // Handle click selection with Ctrl/Cmd for multi-select
+          // Ctrl/Cmd click: toggle selection
           if (e.ctrlKey || e.metaKey) {
             e.stopPropagation()
             const newSelection = new Set(selectedIds)
@@ -290,6 +301,18 @@ export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), o
               newSelection.add(file.id)
             }
             onSelectionChange?.(newSelection)
+          } 
+          // Shift click: add to selection
+          else if (e.shiftKey) {
+            e.stopPropagation()
+            const newSelection = new Set(selectedIds)
+            newSelection.add(file.id)
+            onSelectionChange?.(newSelection)
+          }
+          // Normal click: if there's a selection, clear it. Otherwise card handles the click.
+          else if (selectedIds.size > 0) {
+            e.stopPropagation()
+            onSelectionChange?.(new Set())
           }
         }}
       >

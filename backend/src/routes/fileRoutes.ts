@@ -11,7 +11,8 @@ import {
   setMetadata,
   addTag,
   removeTag,
-  uploadFiles
+  uploadFiles,
+  toggleFavorite
 } from '../controllers/fileController'
 import { uploadVideo, uploadImage, uploadAudio, uploadDocument, uploadAny } from '../middleware/upload'
 
@@ -40,5 +41,8 @@ router.post('/:id/metadata', setMetadata)
 // Tags
 router.post('/:id/tags', addTag)
 router.delete('/:id/tags/:tag', removeTag)
+
+// Favorites
+router.patch('/:id/favorite', toggleFavorite)
 
 export default router

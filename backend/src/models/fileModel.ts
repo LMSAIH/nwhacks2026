@@ -7,6 +7,7 @@ export interface FileRecord {
   filetype: string
   size?: number
   mimetype?: string
+  is_favorite?: boolean
   created_at?: string
   updated_at?: string
 }
@@ -108,6 +109,24 @@ export const FileModel = {
   search(query: string): FileRecord[] {
     const stmt = db.prepare('SELECT * FROM files WHERE filename LIKE ? ORDER BY created_at DESC')
     return stmt.all(`%${query}%`) as FileRecord[]
+  },
+
+  // Toggle favorite status
+  toggleFavorite(id: number): { is_favorite: boolean } | null {
+    const file = this.getById(id)
+    if (!file) return null
+    
+    const newValue = file.is_favorite ? 0 : 1
+    const stmt = db.prepare('UPDATE files SET is_favorite = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+    stmt.run(newValue, id)
+    
+    return { is_favorite: newValue === 1 }
+  },
+
+  // Get favorite files
+  getFavorites(): FileRecord[] {
+    const stmt = db.prepare('SELECT * FROM files WHERE is_favorite = 1 ORDER BY created_at DESC')
+    return stmt.all() as FileRecord[]
   }
 }
 

@@ -7,7 +7,7 @@ import { api } from '@/lib/api'
 import type { FileRecord, SemanticSearchResult } from '@/lib/api'
 import { useDebounce } from '@/hooks/useDebounce'
 
-export type ContentType = 'all' | 'video' | 'image' | 'audio' | 'text' | 'document' | 'notes'
+export type ContentType = 'all' | 'video' | 'image' | 'audio' | 'text' | 'document' | 'notes' | 'favorites'
 
 function App() {
   const [files, setFiles] = useState<FileRecord[]>([])
@@ -20,6 +20,15 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [isCreateNoteModalOpen, setIsCreateNoteModalOpen] = useState(false)
   const [selectedFileIds, setSelectedFileIds] = useState<Set<number>>(new Set())
+  const [recentFiles, setRecentFiles] = useState<FileRecord[]>(() => {
+    // Load from localStorage on init
+    try {
+      const saved = localStorage.getItem('recentFiles')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
   
   // Debounce search for performance (300ms delay)
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
@@ -48,9 +57,17 @@ function App() {
     setLoading(true)
     setIsSemanticSearch(false)
     try {
-      const result = await api.getFiles(filter === 'all' ? undefined : filter)
-      if (result.success) {
-        setFiles(result.files)
+      // Handle favorites filter client-side
+      if (filter === 'favorites') {
+        const result = await api.getFiles()
+        if (result.success) {
+          setFiles(result.files.filter(f => f.is_favorite))
+        }
+      } else {
+        const result = await api.getFiles(filter === 'all' ? undefined : filter)
+        if (result.success) {
+          setFiles(result.files)
+        }
       }
     } catch (error) {
       console.error('Failed to fetch files:', error)
@@ -132,6 +149,17 @@ function App() {
     setSelectedFileIds(ids)
   }
 
+  // Track recently opened files
+  const addToRecentFiles = useCallback((file: FileRecord) => {
+    setRecentFiles(prev => {
+      // Remove if already exists, then add to front
+      const filtered = prev.filter(f => f.id !== file.id)
+      const updated = [file, ...filtered].slice(0, 5) // Keep only last 5
+      localStorage.setItem('recentFiles', JSON.stringify(updated))
+      return updated
+    })
+  }, [])
+
   const handleDeleteSelected = async () => {
     if (selectedFileIds.size === 0) return
     
@@ -147,6 +175,20 @@ function App() {
       fetchFiles()
     } catch (error) {
       console.error('Failed to delete files:', error)
+    }
+  }
+
+  const handleToggleFavorite = async (id: number) => {
+    try {
+      const result = await api.toggleFavorite(id)
+      if (result.success) {
+        // Update the local state to reflect the change
+        setFiles(prev => prev.map(f => 
+          f.id === id ? { ...f, is_favorite: result.is_favorite } : f
+        ))
+      }
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error)
     }
   }
 
@@ -219,6 +261,8 @@ function App() {
         currentFilter={filter}
         onDeleteSelected={handleDeleteSelected}
         hasSelection={selectedFileIds.size > 0}
+        recentFiles={recentFiles}
+        onFileSelect={addToRecentFiles}
       />
 
       {/* Main Content Area */}
@@ -262,7 +306,9 @@ function App() {
                     ? 'All Files' 
                     : filter === 'notes'
                       ? 'Notes'
-                      : `${filter.charAt(0).toUpperCase() + filter.slice(1)}s`
+                      : filter === 'favorites'
+                        ? 'Favorites'
+                        : `${filter.charAt(0).toUpperCase() + filter.slice(1)}s`
                 }
                 <span className="text-muted-foreground font-normal ml-2">
                   ({displayFiles.length})
@@ -277,6 +323,8 @@ function App() {
               onRefresh={fetchFiles}
               selectedIds={selectedFileIds}
               onSelectionChange={handleSelectionChange}
+              onToggleFavorite={handleToggleFavorite}
+              onFileOpen={addToRecentFiles}
             />
           </div>
         </main>

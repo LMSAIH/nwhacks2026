@@ -4,7 +4,8 @@ import {
   Play, 
   Pause, 
   Trash2,
-  Film
+  Film,
+  Star
 } from 'lucide-react'
 import type { FileRecord } from '@/lib/api'
 import { getMediaUrl } from '@/lib/utils'
@@ -13,9 +14,10 @@ interface VideoCardProps {
   file: FileRecord
   onDelete: (id: number) => void
   onSelect: (file: FileRecord) => void
+  onToggleFavorite?: (id: number) => void
 }
 
-export function VideoCard({ file, onDelete, onSelect }: VideoCardProps) {
+export function VideoCard({ file, onDelete, onSelect, onToggleFavorite }: VideoCardProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -62,6 +64,19 @@ export function VideoCard({ file, onDelete, onSelect }: VideoCardProps) {
           {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
         </Button>
       </div>
+
+      {/* Favorite Button - always visible when favorited */}
+      <Button
+        size="icon"
+        variant="ghost"
+        className={`absolute top-2 right-10 h-7 w-7 transition-opacity bg-black/40 hover:bg-black/60 ${file.is_favorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          onToggleFavorite?.(file.id)
+        }}
+      >
+        <Star className={`h-3.5 w-3.5 ${file.is_favorite ? 'fill-primary text-primary' : 'text-white'}`} />
+      </Button>
 
       {/* Delete Button */}
       <Button

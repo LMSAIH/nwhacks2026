@@ -16,6 +16,7 @@ export interface FileRecord {
   tags?: string[]
   frameKeywords?: FrameKeyword[]
   keywordFrameMap?: Record<string, number[]>
+  is_favorite?: boolean
 }
 
 export interface FrameKeyword {
@@ -199,6 +200,14 @@ export const api = {
   // Get single file with full metadata
   async getFile(id: number): Promise<{ success: boolean; file: FileRecord }> {
     const res = await fetch(`${API_BASE}/files/${id}`)
+    return res.json()
+  },
+
+  // Toggle favorite status
+  async toggleFavorite(id: number): Promise<{ success: boolean; is_favorite: boolean }> {
+    const res = await fetch(`${API_BASE}/files/${id}/favorite`, {
+      method: 'PATCH'
+    })
     return res.json()
   },
 

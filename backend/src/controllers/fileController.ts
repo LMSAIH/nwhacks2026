@@ -516,3 +516,20 @@ export const uploadFiles = (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to upload files', details: (error as Error).message })
   }
 }
+
+// Toggle favorite status
+export const toggleFavorite = (req: Request, res: Response) => {
+  try {
+    const { id } = req.params
+    const result = FileModel.toggleFavorite(Number(id))
+    
+    if (!result) {
+      res.status(404).json({ error: 'File not found' })
+      return
+    }
+
+    res.json({ success: true, ...result })
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to toggle favorite', details: (error as Error).message })
+  }
+}

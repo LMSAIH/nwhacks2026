@@ -40,8 +40,9 @@ export function AddFileButton({ onComplete }: AddFileButtonProps) {
 
       {/* Main Add Button */}
       <Button
+        size="sm"
         onClick={() => setIsOpen(!isOpen)}
-        className="gap-2"
+        className="h-8 gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
         data-add-file-button
       >
         <Plus className="h-4 w-4" />

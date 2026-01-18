@@ -239,6 +239,21 @@ export function TopBar({ onSearch, onUpload, onProcessAI, onAddTags, onOpenFolde
 
       {/* Command Palette & Actions */}
       <div className="flex items-center gap-2 ml-4">
+        {/* Theme Toggle */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleTheme}
+          className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
+        </Button>
+
         {/* Commands Dropdown */}
         <div className="relative" ref={commandsRef}>
           <Button 
@@ -276,21 +291,6 @@ export function TopBar({ onSearch, onUpload, onProcessAI, onAddTags, onOpenFolde
             </div>
           )}
         </div>
-
-        {/* Theme Toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleTheme}
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-        >
-          {theme === 'dark' ? (
-            <Sun className="h-4 w-4" />
-          ) : (
-            <Moon className="h-4 w-4" />
-          )}
-        </Button>
 
         {/* Confidence/Similarity Control */}
         <div className="relative" ref={confidenceRef}>

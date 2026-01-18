@@ -21,6 +21,7 @@ db.exec(`
     filetype TEXT NOT NULL,
     size INTEGER,
     mimetype TEXT,
+    is_favorite INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
@@ -83,5 +84,12 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_keyword_embeddings_keyword ON keyword_embeddings(keyword);
 `)
+
+// Migration: Add is_favorite column if it doesn't exist
+try {
+  db.exec(`ALTER TABLE files ADD COLUMN is_favorite INTEGER DEFAULT 0`)
+} catch (e) {
+  // Column already exists, ignore error
+}
 
 export default db

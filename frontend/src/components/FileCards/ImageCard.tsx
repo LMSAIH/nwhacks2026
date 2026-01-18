@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Star } from 'lucide-react'
 import type { FileRecord } from '@/lib/api'
 import { getMediaUrl } from '@/lib/utils'
 
@@ -7,9 +7,10 @@ interface ImageCardProps {
   file: FileRecord
   onDelete: (id: number) => void
   onSelect: (file: FileRecord) => void
+  onToggleFavorite?: (id: number) => void
 }
 
-export function ImageCard({ file, onDelete, onSelect }: ImageCardProps) {
+export function ImageCard({ file, onDelete, onSelect, onToggleFavorite }: ImageCardProps) {
   // Convert filepath to URL for image display
   const imageSrc = getMediaUrl(file.filepath)
 
@@ -30,6 +31,19 @@ export function ImageCard({ file, onDelete, onSelect }: ImageCardProps) {
           target.style.display = 'none'
         }}
       />
+
+      {/* Favorite Button - always visible when favorited */}
+      <Button
+        size="icon"
+        variant="ghost"
+        className={`absolute top-2 right-10 h-7 w-7 transition-opacity bg-black/40 hover:bg-black/60 ${file.is_favorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          onToggleFavorite?.(file.id)
+        }}
+      >
+        <Star className={`h-3.5 w-3.5 ${file.is_favorite ? 'fill-primary text-primary' : 'text-white'}`} />
+      </Button>
 
       {/* Delete Button */}
       <Button
