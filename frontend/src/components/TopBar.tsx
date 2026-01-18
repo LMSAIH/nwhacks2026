@@ -62,7 +62,6 @@ export function TopBar({ onSearch, onUpload, onProcessAI, onAddTags, onOpenFolde
     { id: 'upload', label: 'Upload Files', icon: Upload, shortcut: '⌘U', action: onUpload },
     { id: 'process', label: 'Process with AI', icon: Sparkles, shortcut: '⌘P', action: onProcessAI },
     { id: 'tags', label: 'Add Tags', icon: Tag, shortcut: '⌘T', action: onAddTags },
-    { id: 'folder', label: 'Open Folder', icon: FolderOpen, shortcut: '⌘O', action: onOpenFolder },
     { id: 'index', label: isIndexing ? 'Indexing...' : 'Index for Search', icon: Database, shortcut: '⌘I', action: handleIndexKeywords },
   ]
 
@@ -120,10 +119,6 @@ export function TopBar({ onSearch, onUpload, onProcessAI, onAddTags, onOpenFolde
             e.preventDefault()
             onAddTags?.()
             break
-          case 'o':
-            e.preventDefault()
-            onOpenFolder?.()
-            break
         }
       }
 
@@ -141,7 +136,7 @@ export function TopBar({ onSearch, onUpload, onProcessAI, onAddTags, onOpenFolde
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [clearSearch, handleSearchSubmit, onUpload, onProcessAI, onAddTags, onOpenFolder])
+  }, [clearSearch, handleSearchSubmit, onUpload, onProcessAI, onAddTags])
 
   // Close dropdown when clicking outside
   useEffect(() => {

@@ -391,6 +391,22 @@ export const api = {
     return res.json()
   },
 
+  // Process existing document with AI (extract keywords and generate summary)
+  async processDocumentWithAI(id: number): Promise<{ 
+    success: boolean
+    file?: FileRecord
+    summary?: string
+    keywords?: string[]
+    wordCount?: number
+    characterCount?: number
+    error?: string 
+  }> {
+    const res = await fetch(`${API_BASE}/document/${id}/process-ai`, {
+      method: 'POST'
+    })
+    return res.json()
+  },
+
   // Search files
   async searchFiles(params: { q?: string; keyword?: string; tag?: string; includeFrames?: boolean }): Promise<{ success: boolean; files: FileRecord[] }> {
     const searchParams = new URLSearchParams()

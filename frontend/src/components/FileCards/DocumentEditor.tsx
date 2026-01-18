@@ -10,7 +10,9 @@ import {
   Check,
   Eye,
   Edit3,
-  Columns
+  Columns,
+  Sparkles,
+  Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { FileRecord } from '@/lib/api'
@@ -38,6 +40,10 @@ export function DocumentEditor({ file, onClose, onSave }: DocumentEditorProps) {
   const [wordCount, setWordCount] = useState(0)
   const [charCount, setCharCount] = useState(0)
   const [viewMode, setViewMode] = useState<ViewMode>('edit')
+  const [isProcessingAI, setIsProcessingAI] = useState(false)
+  const [aiProcessed, setAiProcessed] = useState(false)
+  const [summary, setSummary] = useState<string>('')
+  const [showSummary, setShowSummary] = useState(false)
 
   const isMarkdown = file.filename.endsWith('.md')
 
@@ -50,6 +56,9 @@ export function DocumentEditor({ file, onClose, onSave }: DocumentEditorProps) {
           setContent(result.content)
           setOriginalContent(result.content)
           updateCounts(result.content)
+          if (result.summary) {
+            setSummary(result.summary)
+          }
         }
       } catch (error) {
         console.error('Failed to fetch document content:', error)
@@ -83,6 +92,9 @@ export function DocumentEditor({ file, onClose, onSave }: DocumentEditorProps) {
     handleContentChange(e.target.value)
   }
 
+  // Computed value for tracking unsaved changes
+  const hasChanges = content !== originalContent
+
   // Handle close with animation
   const handleClose = useCallback(() => {
     setIsClosing(true)
@@ -113,6 +125,37 @@ export function DocumentEditor({ file, onClose, onSave }: DocumentEditorProps) {
       console.error('Failed to save:', error)
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  // Handle process with AI
+  const handleProcessWithAI = async () => {
+    // Save first if there are unsaved changes
+    if (hasChanges) {
+      await handleSave()
+    }
+    
+    setIsProcessingAI(true)
+    console.log('Processing document with AI:', file.id)
+    try {
+      const result = await api.processDocumentWithAI(file.id)
+      console.log('AI process result:', result)
+      if (result.success) {
+        setAiProcessed(true)
+        if (result.wordCount !== undefined) setWordCount(result.wordCount)
+        if (result.characterCount !== undefined) setCharCount(result.characterCount)
+        if (result.summary) {
+          setSummary(result.summary)
+          setShowSummary(true)
+        }
+        setTimeout(() => setAiProcessed(false), 3000)
+      } else {
+        console.error('Failed to process with AI:', result.error)
+      }
+    } catch (error) {
+      console.error('Failed to process with AI:', error)
+    } finally {
+      setIsProcessingAI(false)
     }
   }
 
@@ -150,8 +193,6 @@ export function DocumentEditor({ file, onClose, onSave }: DocumentEditorProps) {
       default: return 'Document'
     }
   }
-
-  const hasChanges = content !== originalContent
 
   return (
     <>
@@ -261,19 +302,49 @@ export function DocumentEditor({ file, onClose, onSave }: DocumentEditorProps) {
               </div>
             )}
 
-            {/* Save Button */}
+            {/* AI Processed Status */}
+            {aiProcessed && (
+              <div className="flex items-center gap-1.5 text-yellow-500 text-sm animate-in fade-in slide-in-from-right-2 duration-300">
+                <Sparkles className="h-4 w-4" />
+                <span>Processed</span>
+              </div>
+            )}
+
+            {/* Process with AI Button */}
             <Button
               size="sm"
-              variant={hasChanges ? "default" : "ghost"}
+              variant="outline"
+              onClick={handleProcessWithAI}
+              disabled={isProcessingAI || isLoading}
+              className="gap-2 transition-all duration-200 hover:bg-yellow-500/10 hover:text-yellow-600 hover:border-yellow-500/50"
+              title="Extract keywords and generate summary with AI"
+            >
+              {isProcessingAI ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {isProcessingAI ? 'Processing...' : 'Process with AI'}
+            </Button>
+
+            {/* Save Button */}
+            <Button
+              size="icon"
+              variant="ghost"
               onClick={handleSave}
               disabled={isSaving || !hasChanges}
-              className="gap-2 transition-all duration-200"
+              className={`h-8 w-8 transition-all duration-200 ${
+                hasChanges 
+                  ? 'text-primary hover:bg-primary/10' 
+                  : 'text-muted-foreground'
+              }`}
+              title={hasChanges ? 'Save (⌘S)' : 'No changes to save'}
             >
-              <Save className="h-4 w-4" />
-              {isSaving ? 'Saving...' : 'Save'}
-              <kbd className="hidden md:inline-flex h-5 items-center gap-1 rounded bg-muted/50 px-1.5 text-[10px] font-medium text-muted-foreground">
-                ⌘S
-              </kbd>
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </header>
@@ -373,6 +444,27 @@ export function DocumentEditor({ file, onClose, onSave }: DocumentEditorProps) {
             </>
           )}
         </div>
+
+        {/* AI Summary Panel */}
+        {summary && (
+          <div className={`border-t border-border/50 bg-amber-500/5 dark:bg-amber-500/10 transition-all duration-300 ${showSummary ? 'max-h-40' : 'max-h-10'}`}>
+            <button
+              onClick={() => setShowSummary(!showSummary)}
+              className="w-full px-6 py-2 flex items-center gap-2 text-xs font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition-colors"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              AI Summary
+              <span className="text-muted-foreground font-normal ml-1">
+                {showSummary ? '(click to collapse)' : '(click to expand)'}
+              </span>
+            </button>
+            {showSummary && (
+              <div className="px-6 pb-3 text-sm text-foreground/80 leading-relaxed">
+                {summary}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Footer Status Bar */}
         <footer className="flex items-center justify-between px-6 py-3 border-t border-border/50 bg-white/50 dark:bg-black/20 backdrop-blur-xl text-xs text-muted-foreground">

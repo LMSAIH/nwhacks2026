@@ -317,7 +317,7 @@ export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), o
         key={file.id} 
         ref={(el) => setCardRef(file.id, el)}
         data-file-card
-        className={`mb-4 ${wrapperClass} relative rounded-lg transition-all ${
+        className={`mb-4 ${wrapperClass} relative rounded-lg transition-all group ${
           isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''
         }`}
         onClick={(e) => {
@@ -346,13 +346,30 @@ export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), o
           }
         }}
       >
-        {isSelected && (
-          <div className="absolute top-2 left-2 z-10 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+        {/* Selection checkbox - always visible on hover, always visible when selected */}
+        <div 
+          className={`absolute top-2 left-2 z-10 w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer transition-all ${
+            isSelected 
+              ? 'bg-primary border-primary' 
+              : 'bg-background/80 border-muted-foreground/50 opacity-0 group-hover:opacity-100 hover:border-primary'
+          }`}
+          onClick={(e) => {
+            e.stopPropagation()
+            const newSelection = new Set(selectedIds)
+            if (newSelection.has(file.id)) {
+              newSelection.delete(file.id)
+            } else {
+              newSelection.add(file.id)
+            }
+            onSelectionChange?.(newSelection)
+          }}
+        >
+          {isSelected && (
             <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
-          </div>
-        )}
+          )}
+        </div>
         {card}
       </div>
     )

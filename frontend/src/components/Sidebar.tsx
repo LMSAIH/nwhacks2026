@@ -19,9 +19,10 @@ interface SidebarProps {
   currentFilter?: ContentType
   onDeleteSelected?: () => void
   hasSelection?: boolean
+  selectionCount?: number
 }
 
-export function Sidebar({ onCreateNote, onFilterChange, currentFilter = 'all', onDeleteSelected, hasSelection }: SidebarProps) {
+export function Sidebar({ onCreateNote, onFilterChange, currentFilter = 'all', onDeleteSelected, hasSelection, selectionCount = 0 }: SidebarProps) {
   const handleFilterClick = (filter: ContentType) => {
     onFilterChange?.(filter)
   }
@@ -29,7 +30,7 @@ export function Sidebar({ onCreateNote, onFilterChange, currentFilter = 'all', o
   return (
     <aside className="w-60 h-screen bg-secondary/50 border-r border-border flex flex-col">
       {/* Logo / Brand */}
-      <div className="p-4 border-b border-border">
+      <div className="h-14 px-4 flex items-center">
         <h1 className="text-base font-semibold flex items-center gap-1.5">
           <img src="/image0.png" alt="Omni Logo" className="w-10 h-10 rounded-md object-contain" />
           <span className="text-primary">Omni</span>
@@ -123,7 +124,7 @@ export function Sidebar({ onCreateNote, onFilterChange, currentFilter = 'all', o
           disabled={!hasSelection}
         >
           <Trash2 className="h-4 w-4" />
-          Delete All
+          {hasSelection ? `Delete (${selectionCount})` : 'Delete'}
         </Button>
       </div>
     </aside>

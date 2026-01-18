@@ -46,12 +46,12 @@ function FileTypeIcon({ type, className }: { type: string; className?: string })
   }
 }
 
-// Similarity badge color based on score
+// Similarity badge color based on score - using more visible colors
 function getSimilarityColor(similarity: number): string {
-  if (similarity >= 0.8) return 'bg-green-500/20 text-green-400 border-green-500/30'
-  if (similarity >= 0.6) return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-  if (similarity >= 0.4) return 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-  return 'bg-red-500/20 text-red-400 border-red-500/30'
+  if (similarity >= 0.8) return 'bg-emerald-500/30 text-emerald-600 dark:text-emerald-400 border-emerald-500/50 font-medium'
+  if (similarity >= 0.6) return 'bg-blue-500/30 text-blue-600 dark:text-blue-400 border-blue-500/50 font-medium'
+  if (similarity >= 0.4) return 'bg-amber-500/30 text-amber-600 dark:text-amber-400 border-amber-500/50 font-medium'
+  return 'bg-rose-500/30 text-rose-600 dark:text-rose-400 border-rose-500/50 font-medium'
 }
 
 // Single search result card
@@ -114,19 +114,19 @@ function SearchResultCard({
 
         {/* Matched Keywords */}
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {result.matchedKeywords.slice(0, 5).map((kw, idx) => (
+          {result.matchedKeywords.slice(0, 6).map((kw, idx) => (
             <span
               key={idx}
-              className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${getSimilarityColor(kw.similarity)}`}
+              className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border shadow-sm ${getSimilarityColor(kw.similarity)}`}
             >
-              <Tag className="h-2.5 w-2.5" />
-              {kw.keyword}
-              <span className="opacity-70">({(kw.similarity * 100).toFixed(0)}%)</span>
+              <Tag className="h-3 w-3" />
+              <span className="font-medium">{kw.keyword}</span>
+              <span className="text-[10px] opacity-80">({(kw.similarity * 100).toFixed(0)}%)</span>
             </span>
           ))}
-          {result.matchedKeywords.length > 5 && (
-            <span className="text-xs text-muted-foreground px-2">
-              +{result.matchedKeywords.length - 5} more
+          {result.matchedKeywords.length > 6 && (
+            <span className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded-md">
+              +{result.matchedKeywords.length - 6} more
             </span>
           )}
         </div>
@@ -159,9 +159,28 @@ function SearchResultCard({
 
         {/* Document summary preview */}
         {(result.filetype === 'document' || result.filetype === 'text') && result.summary && (
-          <p className="mt-2 text-xs text-muted-foreground line-clamp-2">
-            {result.summary.slice(0, 200)}...
-          </p>
+          <div className="mt-3 p-2.5 bg-muted/50 rounded-md border border-border/50">
+            <p className="text-xs text-foreground/80 line-clamp-3">
+              {result.summary.slice(0, 300)}{result.summary.length > 300 ? '...' : ''}
+            </p>
+          </div>
+        )}
+
+        {/* Document/Text keywords display */}
+        {(result.filetype === 'document' || result.filetype === 'text') && result.matchedKeywords.length > 0 && (
+          <div className="mt-2 flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground font-medium">Found in:</span>
+            <div className="flex flex-wrap gap-1">
+              {result.matchedKeywords.slice(0, 4).map((kw, idx) => (
+                <span
+                  key={idx}
+                  className="px-2 py-0.5 bg-violet-500/20 text-violet-600 dark:text-violet-400 rounded-md font-medium"
+                >
+                  {kw.keyword}
+                </span>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 
@@ -193,22 +212,22 @@ function SearchResultCard({
 // Frame card for video matches
 function FrameCard({ frame }: { frame: MatchedFrame }) {
   return (
-    <div className="bg-card border border-border rounded p-2">
-      <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-        <Clock className="h-3 w-3" />
+    <div className="bg-card border border-border rounded-lg p-2.5 hover:border-primary/50 transition-colors">
+      <div className="flex items-center gap-1.5 text-xs text-foreground font-medium mb-1.5">
+        <Clock className="h-3.5 w-3.5 text-primary" />
         {frame.timestamp !== undefined ? formatTimestamp(frame.timestamp) : `Frame ${frame.frame_index}`}
       </div>
       <div className="flex flex-wrap gap-1">
         {frame.keywords.slice(0, 3).map((kw, idx) => (
           <span
             key={idx}
-            className="text-[10px] px-1.5 py-0.5 bg-primary/20 text-primary rounded"
+            className="text-[10px] px-2 py-0.5 bg-cyan-500/25 text-cyan-600 dark:text-cyan-400 rounded-md font-medium"
           >
             {kw}
           </span>
         ))}
         {frame.keywords.length > 3 && (
-          <span className="text-[10px] text-muted-foreground">+{frame.keywords.length - 3}</span>
+          <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">+{frame.keywords.length - 3}</span>
         )}
       </div>
     </div>

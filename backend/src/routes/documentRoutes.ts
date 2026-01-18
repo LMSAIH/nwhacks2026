@@ -6,7 +6,8 @@ import {
   extractDocumentKeywords,
   getDocumentContent,
   updateDocumentContent,
-  createNewDocument
+  createNewDocument,
+  processDocumentWithAI
 } from '../controllers/documentController'
 
 const router = Router()
@@ -28,5 +29,8 @@ router.get('/:id/content', getDocumentContent)
 
 // Update document content by ID
 router.put('/:id/content', updateDocumentContent)
+
+// Process existing document with AI by ID
+router.post('/:id/process-ai', processDocumentWithAI)
 
 export default router

@@ -92,7 +92,7 @@ export function VideoCard({ file, onDelete, onSelect, onToggleFavorite }: VideoC
       </Button>
 
       {/* Video Badge */}
-      <div className="absolute top-2 left-2 p-1.5 bg-black/60 rounded-lg">
+      <div className="absolute bottom-2 right-2 p-1.5 bg-black/60 rounded-lg">
         <Film className="h-3.5 w-3.5 text-white" />
       </div>
 

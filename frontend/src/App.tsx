@@ -306,6 +306,7 @@ function App() {
         currentFilter={filter}
         onDeleteSelected={handleDeleteSelected}
         hasSelection={selectedFileIds.size > 0}
+        selectionCount={selectedFileIds.size}
       />
 
       {/* Main Content Area */}
@@ -326,7 +327,7 @@ function App() {
         <div className="flex-1 flex overflow-hidden">
           {/* Main content */}
           <main className="flex-1 overflow-auto bg-background p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
+          <div className="max-w-7xl space-y-6">
             {/* Processing Indicator */}
             {isProcessing && (
               <div className="flex items-center gap-2 text-muted-foreground">

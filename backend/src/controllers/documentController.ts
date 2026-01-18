@@ -490,6 +490,73 @@ export async function updateDocumentContent(req: Request, res: Response) {
   }
 }
 
+// Process existing document with AI by file ID
+export async function processDocumentWithAI(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const fileId = parseInt(id);
+
+    if (isNaN(fileId)) {
+      return res.status(400).json({ error: "Invalid file ID" });
+    }
+
+    const fileRecord = FileModel.getById(fileId);
+
+    if (!fileRecord) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    // Validate file type
+    const docType = getDocumentType(fileRecord.filepath);
+    if (docType === 'unknown') {
+      return res.status(400).json({ error: "File is not a supported document type" });
+    }
+
+    // Read content
+    const content = readTextFile(fileRecord.filepath);
+
+    // Analyze with Gemini
+    const analysis = await analyzeWithGemini(content, 'both');
+
+    // Clear existing keywords
+    KeywordModel.deleteByFileId(fileId);
+
+    // Save keywords
+    if (analysis.keywords && analysis.keywords.length > 0) {
+      KeywordModel.addMany(fileId, analysis.keywords.map(k => k.trim()));
+      
+      // Index keywords for semantic search (run in background)
+      searchService.storeKeywordEmbeddings(analysis.keywords.map(k => k.trim())).catch(err => {
+        console.error('Failed to index document keywords:', err);
+      });
+    }
+
+    // Update metadata
+    const wordCount = content.split(/\s+/).filter(w => w.length > 0).length;
+    const characterCount = content.length;
+    MetadataModel.set(fileId, 'summary', analysis.summary || '');
+    MetadataModel.set(fileId, 'word_count', wordCount.toString());
+    MetadataModel.set(fileId, 'character_count', characterCount.toString());
+    MetadataModel.set(fileId, 'document_type', docType);
+
+    res.json({
+      success: true,
+      file: fileRecord,
+      summary: analysis.summary || '',
+      keywords: analysis.keywords || [],
+      wordCount,
+      characterCount
+    });
+
+  } catch (error) {
+    console.error("Process document with AI error:", error);
+    res.status(500).json({
+      error: "Failed to process document with AI",
+      details: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+}
+
 // Get document content by file ID
 export async function getDocumentContent(req: Request, res: Response) {
   try {
