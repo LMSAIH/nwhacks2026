@@ -24,6 +24,8 @@ interface FileGridProps {
   onSelectionChange?: (ids: Set<number>) => void
   onToggleFavorite?: (id: number) => void
   onFileOpen?: (file: FileRecord) => void
+  fileToOpen?: { file: FileRecord; timestamp?: number } | null
+  onFileOpened?: () => void
 }
 
 // Calculate size class for masonry layout
@@ -67,11 +69,12 @@ function getItemSize(file: FileRecord): 'tiny' | 'small' | 'medium' | 'large' {
   return 'small'
 }
 
-export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), onSelectionChange, onToggleFavorite, onFileOpen }: FileGridProps) {
+export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), onSelectionChange, onToggleFavorite, onFileOpen, fileToOpen, onFileOpened }: FileGridProps) {
   const [selectedFile, setSelectedFile] = useState<FileRecord | null>(null)
   const [detailedFile, setDetailedFile] = useState<FileRecord | null>(null)
   const [loadingDetails, setLoadingDetails] = useState(false)
   const [documentEditorFile, setDocumentEditorFile] = useState<FileRecord | null>(null)
+  const [initialTimestamp, setInitialTimestamp] = useState<number | undefined>(undefined)
   
   // Drag selection state
   const gridRef = useRef<HTMLDivElement>(null)
@@ -156,6 +159,33 @@ export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), o
     window.addEventListener('mouseup', handleGlobalMouseUp)
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp)
   }, [isDragging, handleMouseUp])
+
+  // Handle fileToOpen from search panel
+  useEffect(() => {
+    if (fileToOpen) {
+      const { file, timestamp } = fileToOpen
+      setInitialTimestamp(timestamp)
+      
+      // For video/audio, open the detail panel
+      if (file.filetype === 'video' || file.filetype === 'audio') {
+        setSelectedFile(file)
+        setDetailedFile(file)
+        // Fetch full details
+        api.getFile(file.id).then(result => {
+          if (result.success) {
+            setDetailedFile(result.file)
+          }
+        })
+      } else if (file.filetype === 'document' || file.filetype === 'text') {
+        setDocumentEditorFile(file)
+      } else {
+        setSelectedFile(file)
+        setDetailedFile(file)
+      }
+      
+      onFileOpened?.()
+    }
+  }, [fileToOpen, onFileOpened])
 
   // Register card ref
   const setCardRef = useCallback((fileId: number, el: HTMLDivElement | null) => {
@@ -332,7 +362,7 @@ export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), o
   const renderDetailPanel = () => {
     if (!selectedFile || !detailedFile) return null
 
-    const props = {
+    const baseProps = {
       file: detailedFile,
       onClose: closeDetail
     }
@@ -348,11 +378,11 @@ export function FileGrid({ files, loading, onRefresh, selectedIds = new Set(), o
     // Documents use full-screen editor, not sidebar
     switch (detailedFile.filetype) {
       case 'video':
-        return <VideoDetailPanel {...props} />
+        return <VideoDetailPanel {...baseProps} initialTimestamp={initialTimestamp} onTimestampUsed={() => setInitialTimestamp(undefined)} />
       case 'audio':
-        return <AudioDetailPanel {...props} />
+        return <AudioDetailPanel {...baseProps} initialTimestamp={initialTimestamp} onTimestampUsed={() => setInitialTimestamp(undefined)} />
       case 'image':
-        return <ImageDetailPanel {...props} />
+        return <ImageDetailPanel {...baseProps} />
       case 'document':
       case 'text':
         return null // Handled by DocumentEditor

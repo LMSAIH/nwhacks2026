@@ -88,8 +88,8 @@ export function TopBar({ onSearch, onUpload, onProcessAI, onAddTags, onOpenFolde
   const handleHistoryItemClick = (term: string) => {
     setSearchQuery(term)
     onSearch?.(term)
+    addToHistory(term)
     setShowHistory(false)
-    inputRef.current?.focus()
   }
 
   // Keyboard shortcut: Cmd/Ctrl + K to focus search, and command shortcuts

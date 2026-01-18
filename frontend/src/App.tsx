@@ -3,11 +3,12 @@ import { Sidebar } from '@/components/Sidebar'
 import { TopBar } from '@/components/TopBar'
 import { FileGrid } from '@/components/FileGrid'
 import { CreateNoteModal } from '@/components/CreateNoteModal'
+import { SearchPanel } from '@/components/SearchPanel'
 import { api } from '@/lib/api'
 import type { FileRecord, SemanticSearchResult } from '@/lib/api'
 import { useDebounce } from '@/hooks/useDebounce'
 
-export type ContentType = 'all' | 'video' | 'image' | 'audio' | 'text' | 'document' | 'notes' | 'favorites'
+export type ContentType = 'all' | 'video' | 'image' | 'audio' | 'text' | 'document' | 'notes' | 'favorites' | 'recent'
 
 function App() {
   const [files, setFiles] = useState<FileRecord[]>([])
@@ -29,6 +30,8 @@ function App() {
       return []
     }
   })
+  const [isSearchPanelOpen, setIsSearchPanelOpen] = useState(false)
+  const [fileToOpen, setFileToOpen] = useState<{ file: FileRecord; timestamp?: number } | null>(null)
   
   // Debounce search for performance (300ms delay)
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
@@ -63,6 +66,23 @@ function App() {
         if (result.success) {
           setFiles(result.files.filter(f => f.is_favorite))
         }
+      } else if (filter === 'recent') {
+        // Recent filter shows recent files, but verify they still exist
+        const result = await api.getFiles()
+        if (result.success) {
+          const existingIds = new Set(result.files.map(f => f.id))
+          const validRecentFiles = recentFiles.filter(f => existingIds.has(f.id))
+          // Update recentFiles if any were removed
+          if (validRecentFiles.length !== recentFiles.length) {
+            setRecentFiles(validRecentFiles)
+            localStorage.setItem('recentFiles', JSON.stringify(validRecentFiles))
+          }
+          setFiles(validRecentFiles)
+        } else {
+          setFiles(recentFiles)
+        }
+        setLoading(false)
+        return
       } else {
         const result = await api.getFiles(filter === 'all' ? undefined : filter)
         if (result.success) {
@@ -74,7 +94,7 @@ function App() {
     } finally {
       setLoading(false)
     }
-  }, [filter])
+  }, [filter, recentFiles])
 
   // Fetch files when filter changes
   useEffect(() => {
@@ -103,6 +123,11 @@ function App() {
         })
         if (result.success) {
           setSearchResults(result.results)
+          // Open search panel if there are video/audio results
+          const hasMediaResults = result.results.some(r => r.filetype === 'video' || r.filetype === 'audio')
+          if (hasMediaResults) {
+            setIsSearchPanelOpen(true)
+          }
         }
       } catch (error) {
         console.error('Semantic search failed:', error)
@@ -160,6 +185,18 @@ function App() {
     })
   }, [])
 
+  // Handle opening a file from search results (with optional timestamp)
+  const handleSearchFileOpen = useCallback((file: FileRecord, timestamp?: number) => {
+    addToRecentFiles(file)
+    setFileToOpen({ file, timestamp })
+    setIsSearchPanelOpen(false)
+  }, [addToRecentFiles])
+
+  // Clear the file to open after it's been handled
+  const clearFileToOpen = useCallback(() => {
+    setFileToOpen(null)
+  }, [])
+
   const handleDeleteSelected = async () => {
     if (selectedFileIds.size === 0) return
     
@@ -171,6 +208,14 @@ function App() {
       await Promise.all(
         Array.from(selectedFileIds).map(id => api.deleteFile(id))
       )
+      
+      // Remove deleted files from recent files
+      setRecentFiles(prev => {
+        const updated = prev.filter(f => !selectedFileIds.has(f.id))
+        localStorage.setItem('recentFiles', JSON.stringify(updated))
+        return updated
+      })
+      
       setSelectedFileIds(new Set())
       fetchFiles()
     } catch (error) {
@@ -261,8 +306,6 @@ function App() {
         currentFilter={filter}
         onDeleteSelected={handleDeleteSelected}
         hasSelection={selectedFileIds.size > 0}
-        recentFiles={recentFiles}
-        onFileSelect={addToRecentFiles}
       />
 
       {/* Main Content Area */}
@@ -279,8 +322,10 @@ function App() {
           onConfidenceChange={handleConfidenceChange}
         />
 
-        {/* Content Area */}
-        <main className="flex-1 overflow-auto bg-background p-6">
+        {/* Content Area with optional Search Panel */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Main content */}
+          <main className="flex-1 overflow-auto bg-background p-6">
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Processing Indicator */}
             {isProcessing && (
@@ -308,7 +353,9 @@ function App() {
                       ? 'Notes'
                       : filter === 'favorites'
                         ? 'Favorites'
-                        : `${filter.charAt(0).toUpperCase() + filter.slice(1)}s`
+                        : filter === 'recent'
+                          ? 'Recent'
+                          : `${filter.charAt(0).toUpperCase() + filter.slice(1)}s`
                 }
                 <span className="text-muted-foreground font-normal ml-2">
                   ({displayFiles.length})
@@ -325,9 +372,22 @@ function App() {
               onSelectionChange={handleSelectionChange}
               onToggleFavorite={handleToggleFavorite}
               onFileOpen={addToRecentFiles}
+              fileToOpen={fileToOpen}
+              onFileOpened={clearFileToOpen}
             />
           </div>
         </main>
+
+          {/* Search Results Panel - inline on right */}
+          <SearchPanel
+            results={searchResults}
+            query={debouncedSearchQuery}
+            loading={loading && isSemanticSearch}
+            isOpen={isSearchPanelOpen}
+            onClose={() => setIsSearchPanelOpen(false)}
+            onFileOpen={handleSearchFileOpen}
+          />
+        </div>
       </div>
 
       {/* Create Note Modal */}

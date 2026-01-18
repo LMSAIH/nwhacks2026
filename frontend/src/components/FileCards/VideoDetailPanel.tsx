@@ -19,9 +19,11 @@ import { getMediaUrl } from '@/lib/utils'
 interface VideoDetailPanelProps {
   file: FileRecord
   onClose: () => void
+  initialTimestamp?: number
+  onTimestampUsed?: () => void
 }
 
-export function VideoDetailPanel({ file, onClose }: VideoDetailPanelProps) {
+export function VideoDetailPanel({ file, onClose, initialTimestamp, onTimestampUsed }: VideoDetailPanelProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -127,6 +129,24 @@ export function VideoDetailPanel({ file, onClose }: VideoDetailPanelProps) {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleClose])
+
+  // Seek to initial timestamp when provided
+  useEffect(() => {
+    if (initialTimestamp !== undefined && videoRef.current) {
+      const video = videoRef.current
+      const seekToInitial = () => {
+        video.currentTime = initialTimestamp
+        setCurrentTime(initialTimestamp)
+        onTimestampUsed?.()
+      }
+      
+      if (video.readyState >= 1) {
+        seekToInitial()
+      } else {
+        video.addEventListener('loadedmetadata', seekToInitial, { once: true })
+      }
+    }
+  }, [initialTimestamp, onTimestampUsed])
 
   useEffect(() => {
     const video = videoRef.current

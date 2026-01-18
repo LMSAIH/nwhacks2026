@@ -18,9 +18,11 @@ import { getMediaUrl } from '@/lib/utils'
 interface AudioDetailPanelProps {
   file: FileRecord
   onClose: () => void
+  initialTimestamp?: number
+  onTimestampUsed?: () => void
 }
 
-export function AudioDetailPanel({ file, onClose }: AudioDetailPanelProps) {
+export function AudioDetailPanel({ file, onClose, initialTimestamp, onTimestampUsed }: AudioDetailPanelProps) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -68,6 +70,24 @@ export function AudioDetailPanel({ file, onClose }: AudioDetailPanelProps) {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleClose])
+
+  // Seek to initial timestamp when provided
+  useEffect(() => {
+    if (initialTimestamp !== undefined && audioRef.current) {
+      const audio = audioRef.current
+      const seekToInitial = () => {
+        audio.currentTime = initialTimestamp
+        setCurrentTime(initialTimestamp)
+        onTimestampUsed?.()
+      }
+      
+      if (audio.readyState >= 1) {
+        seekToInitial()
+      } else {
+        audio.addEventListener('loadedmetadata', seekToInitial, { once: true })
+      }
+    }
+  }, [initialTimestamp, onTimestampUsed])
 
   useEffect(() => {
     const audio = audioRef.current
