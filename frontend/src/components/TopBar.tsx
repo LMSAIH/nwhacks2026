@@ -10,10 +10,13 @@ import {
   X,
   Clock,
   Trash2,
-  Database
+  Database,
+  Sun,
+  Moon
 } from 'lucide-react'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSearchHistory } from '@/hooks/useSearchHistory'
+import { useTheme } from '@/hooks/useTheme'
 import { AddFileButton } from '@/components/AddFile'
 import { api } from '@/lib/api'
 
@@ -39,6 +42,7 @@ export function TopBar({ onSearch, onUpload, onProcessAI, onAddTags, onOpenFolde
   const commandsRef = useRef<HTMLDivElement>(null)
   const confidenceRef = useRef<HTMLDivElement>(null)
   const { history, addToHistory, removeFromHistory, clearHistory } = useSearchHistory()
+  const { theme, toggleTheme } = useTheme()
 
   const handleIndexKeywords = async () => {
     setIsIndexing(true)
@@ -272,6 +276,21 @@ export function TopBar({ onSearch, onUpload, onProcessAI, onAddTags, onOpenFolde
             </div>
           )}
         </div>
+
+        {/* Theme Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
+        </Button>
 
         {/* Confidence/Similarity Control */}
         <div className="relative" ref={confidenceRef}>

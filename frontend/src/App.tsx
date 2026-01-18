@@ -19,6 +19,7 @@ function App() {
   const [searchConfidence, setSearchConfidence] = useState(0.3)
   const [isProcessing, setIsProcessing] = useState(false)
   const [isCreateNoteModalOpen, setIsCreateNoteModalOpen] = useState(false)
+  const [selectedFileIds, setSelectedFileIds] = useState<Set<number>>(new Set())
   
   // Debounce search for performance (300ms delay)
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
@@ -127,6 +128,28 @@ function App() {
     fetchFiles()
   }
 
+  const handleSelectionChange = (ids: Set<number>) => {
+    setSelectedFileIds(ids)
+  }
+
+  const handleDeleteSelected = async () => {
+    if (selectedFileIds.size === 0) return
+    
+    const count = selectedFileIds.size
+    if (!confirm(`Are you sure you want to delete ${count} file${count > 1 ? 's' : ''}?`)) return
+    
+    try {
+      // Delete all selected files
+      await Promise.all(
+        Array.from(selectedFileIds).map(id => api.deleteFile(id))
+      )
+      setSelectedFileIds(new Set())
+      fetchFiles()
+    } catch (error) {
+      console.error('Failed to delete files:', error)
+    }
+  }
+
   const handleCreateFolder = () => {
     console.log('Create new folder')
   }
@@ -192,9 +215,10 @@ function App() {
       {/* Left Sidebar */}
       <Sidebar 
         onCreateNote={handleCreateNote}
-        onCreateFolder={handleCreateFolder}
         onFilterChange={handleFilterChange}
         currentFilter={filter}
+        onDeleteSelected={handleDeleteSelected}
+        hasSelection={selectedFileIds.size > 0}
       />
 
       {/* Main Content Area */}
@@ -250,7 +274,9 @@ function App() {
             <FileGrid 
               files={displayFiles} 
               loading={loading} 
-              onRefresh={fetchFiles} 
+              onRefresh={fetchFiles}
+              selectedIds={selectedFileIds}
+              onSelectionChange={handleSelectionChange}
             />
           </div>
         </main>

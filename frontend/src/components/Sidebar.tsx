@@ -1,12 +1,10 @@
 import { Button } from '@/components/ui/button'
 import { 
   Plus, 
-  FolderPlus, 
   FileText, 
   Image, 
   Video, 
   Music, 
-  Settings,
   Star,
   Clock,
   Trash2,
@@ -16,12 +14,13 @@ import { type ContentType } from '@/App'
 
 interface SidebarProps {
   onCreateNote?: () => void
-  onCreateFolder?: () => void
   onFilterChange?: (filter: ContentType) => void
   currentFilter?: ContentType
+  onDeleteSelected?: () => void
+  hasSelection?: boolean
 }
 
-export function Sidebar({ onCreateNote, onCreateFolder, onFilterChange, currentFilter = 'all' }: SidebarProps) {
+export function Sidebar({ onCreateNote, onFilterChange, currentFilter = 'all', onDeleteSelected, hasSelection }: SidebarProps) {
   const handleFilterClick = (filter: ContentType) => {
     onFilterChange?.(filter)
   }
@@ -46,14 +45,6 @@ export function Sidebar({ onCreateNote, onCreateFolder, onFilterChange, currentF
         >
           <Plus className="h-4 w-4" />
           New Note
-        </Button>
-        <Button 
-          variant="ghost" 
-          onClick={onCreateFolder}
-          className="w-full justify-start gap-2 h-9 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <FolderPlus className="h-4 w-4" />
-          New Folder
         </Button>
       </div>
 
@@ -118,13 +109,14 @@ export function Sidebar({ onCreateNote, onCreateFolder, onFilterChange, currentF
 
       {/* Bottom Actions */}
       <div className="p-3 border-t border-border space-y-1">
-        <Button variant="ghost" className="w-full justify-start gap-2 h-9 text-sm text-muted-foreground hover:text-foreground">
+        <Button 
+          variant="ghost" 
+          className={`w-full justify-start gap-2 h-9 text-sm ${hasSelection ? 'text-destructive hover:text-destructive hover:bg-destructive/10' : 'text-muted-foreground hover:text-foreground'}`}
+          onClick={onDeleteSelected}
+          disabled={!hasSelection}
+        >
           <Trash2 className="h-4 w-4" />
-          Trash
-        </Button>
-        <Button variant="ghost" className="w-full justify-start gap-2 h-9 text-sm text-muted-foreground hover:text-foreground">
-          <Settings className="h-4 w-4" />
-          Settings
+          {hasSelection ? 'Delete Selected' : 'Trash'}
         </Button>
       </div>
     </aside>

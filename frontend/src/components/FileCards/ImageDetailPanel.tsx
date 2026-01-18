@@ -107,7 +107,7 @@ export function ImageDetailPanel({ file, onClose }: ImageDetailPanelProps) {
 
               {/* File Info */}
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 rounded-lg text-[11px] font-medium text-green-600 dark:text-green-400 uppercase tracking-wide">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 rounded-lg text-[11px] font-medium text-primary uppercase tracking-wide">
                   <Image className="h-3.5 w-3.5" />
                   Image
                 </div>
@@ -151,7 +151,7 @@ export function ImageDetailPanel({ file, onClose }: ImageDetailPanelProps) {
             {description && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium flex items-center gap-2 text-foreground">
-                  <FileText className="h-4 w-4 text-blue-500" />
+                  <FileText className="h-4 w-4 text-primary" />
                   AI Description
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed bg-secondary/50 p-4 rounded-xl">
@@ -164,14 +164,14 @@ export function ImageDetailPanel({ file, onClose }: ImageDetailPanelProps) {
             {file.keywords && file.keywords.length > 0 && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium flex items-center gap-2 text-foreground">
-                  <Tag className="h-4 w-4 text-green-500" />
+                  <Tag className="h-4 w-4 text-primary" />
                   Keywords ({file.keywords.length})
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {file.keywords.map((keyword, i) => (
                     <span
                       key={i}
-                      className="px-3 py-1.5 bg-green-500/10 text-green-700 dark:text-green-300 rounded-full text-xs font-medium"
+                      className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-medium"
                     >
                       {keyword}
                     </span>
