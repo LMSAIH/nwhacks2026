@@ -7,7 +7,7 @@ import { api } from '@/lib/api'
 import type { FileRecord, SemanticSearchResult } from '@/lib/api'
 import { useDebounce } from '@/hooks/useDebounce'
 
-export type ContentType = 'all' | 'video' | 'image' | 'audio' | 'text' | 'document'
+export type ContentType = 'all' | 'video' | 'image' | 'audio' | 'text' | 'document' | 'notes'
 
 function App() {
   const [files, setFiles] = useState<FileRecord[]>([])
@@ -236,7 +236,9 @@ function App() {
                   )
                   : filter === 'all' 
                     ? 'All Files' 
-                    : `${filter.charAt(0).toUpperCase() + filter.slice(1)}s`
+                    : filter === 'notes'
+                      ? 'Notes'
+                      : `${filter.charAt(0).toUpperCase() + filter.slice(1)}s`
                 }
                 <span className="text-muted-foreground font-normal ml-2">
                   ({displayFiles.length})

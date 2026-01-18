@@ -74,6 +74,13 @@ export const FileModel = {
     return stmt.all(filetype) as FileRecord[]
   },
 
+  // Get files by multiple types (e.g., for 'notes' which includes document and text)
+  getByTypes(filetypes: string[]): FileRecord[] {
+    const placeholders = filetypes.map(() => '?').join(', ')
+    const stmt = db.prepare(`SELECT * FROM files WHERE filetype IN (${placeholders}) ORDER BY created_at DESC`)
+    return stmt.all(...filetypes) as FileRecord[]
+  },
+
   // Update file
   update(id: number, updates: Partial<FileRecord>): boolean {
     const fields = Object.keys(updates)

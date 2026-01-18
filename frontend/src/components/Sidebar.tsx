@@ -82,7 +82,11 @@ export function Sidebar({ onCreateNote, onCreateFolder, onFilterChange, currentF
         <p className="text-xs font-medium text-muted-foreground px-2 py-2 mt-4">
           Content Types
         </p>
-        <Button variant="ghost" className="w-full justify-start gap-2 h-9 text-sm text-muted-foreground hover:text-foreground">
+        <Button 
+          variant={currentFilter === 'notes' ? 'secondary' : 'ghost'} 
+          className={`w-full justify-start gap-2 h-9 text-sm ${currentFilter !== 'notes' ? 'text-muted-foreground hover:text-foreground' : ''}`}
+          onClick={() => handleFilterClick('notes')}
+        >
           <FileText className="h-4 w-4" />
           Notes
         </Button>

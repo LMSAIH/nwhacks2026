@@ -41,7 +41,13 @@ const getFileType = (mimetype: string): string => {
 export const getAllFiles = (req: Request, res: Response) => {
   try {
     const { type } = req.query
-    const files = type ? FileModel.getByType(type as string) : FileModel.getAll()
+    let files;
+    if (type === 'notes') {
+      // Notes includes both document (md) and text (txt) types
+      files = FileModel.getByTypes(['document', 'text'])
+    } else {
+      files = type ? FileModel.getByType(type as string) : FileModel.getAll()
+    }
     
     // Enrich files with metadata, keywords, and tags
     const enrichedFiles = files.map(file => {
